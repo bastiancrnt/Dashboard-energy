@@ -34,6 +34,8 @@ fig3 = go.Figure()
 fig3.add_trace(go.Scatter(x=df["time"], y = df["price_day_ahead"], name = "Day-Ahead"))
 fig3.add_trace(go.Scatter(x=df["time"], y = df["price_intraday"], name = "Intraday"))
 
+fig4 = go.Figure()
+fig4.add_trace(go.Scatter(x = df["time"], y = df["price_day_ahead"]-df["price_intraday"], name="Spread"))
 
 app.layout = html.Div(children=[
     html.H1("Energy Market Dashboard"),
@@ -47,22 +49,29 @@ app.layout = html.Div(children=[
     ),
     #dcc.Graph(id="price-chart1", figure=fig1), #conteneur du graphe
     #dcc.Graph(id="price-chart2", figure=fig2),
-    dcc.Graph(id="price-chart3", figure=fig3)    
+    dcc.Graph(id="price-chart3", figure=fig3),  
+    dcc.Graph(id="spread_chart", figure=fig4)  
 ])
 
 @app.callback(
     Output("price-chart3", "figure"),
+    Output("spread_chart", "figure"),
     Input("date-filter", "start_date"),
     Input("date-filter", "end_date"),
 )
 def update_chart(start_date, end_date):
-    filtered_df = df[(df["time"] >= start_date) & (df["time"] <= end_date)]
+    filtered_df = df[
+    (df["time"] >= pd.Timestamp(start_date)) & 
+    (df["time"] <= pd.Timestamp(end_date))
+]
+    fig1 = go.Figure()
+    fig1.add_trace(go.Scatter(x=filtered_df["time"], y=filtered_df["price_day_ahead"], name="Day-Ahead"))
+    fig1.add_trace(go.Scatter(x=filtered_df["time"], y=filtered_df["price_intraday"], name="Intraday"))
     
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=filtered_df["time"], y=filtered_df["price_day_ahead"], name="Day-Ahead"))
-    fig.add_trace(go.Scatter(x=filtered_df["time"], y=filtered_df["price_intraday"], name="Intraday"))
-    
-    return fig
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(x = filtered_df["time"], y = filtered_df["price_day_ahead"]-filtered_df["price_intraday"], name="Spread"))
+
+    return fig1, fig2
 
 
 
